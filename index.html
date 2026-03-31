@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Izaak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--surface:#111;--surface2:#161616;
+  --border:rgba(255,255,255,0.07);
+  --blue:#4f9cf9;--blue-dim:rgba(79,156,249,0.13);--blue-glow:rgba(79,156,249,0.3);
+  --text:#e8e8e8;--muted:#555;--muted2:#2e2e2e;
+  --r:14px;--r-lg:22px;
+  --fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'Geist Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:15px;line-height:1.6;overflow-x:hidden}
+
+/* grain */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:120px}
+
+/* pill nav */
+#pill-nav{
+  position:fixed;top:20px;left:50%;
+  transform:translateX(-50%) translateY(-90px);
+  z-index:500;
+  background:rgba(14,14,14,.8);
+  backdrop-filter:blur(20px) saturate(1.5);
+  -webkit-backdrop-filter:blur(20px) saturate(1.5);
+  border:1px solid var(--border);
+  border-radius:999px;padding:7px 10px;
+  display:flex;gap:2px;align-items:center;
+  opacity:0;transition:opacity .55s ease,transform .55s cubic-bezier(.22,1,.36,1);
+}
+#pill-nav.vis{opacity:1;transform:translateX(-50%) translateY(0)}
+.pb{width:40px;height:40px;border-radius:999px;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:color .25s,background .25s,box-shadow .25s}
+.pb:hover,.pb.active{color:var(--blue);background:var(--blue-dim);box-shadow:0 0 14px var(--blue-glow)}
+.pb svg{width:17px;height:17px;stroke-width:1.7}
+
+/* sections */
+section{width:100%;max-width:700px;margin:0 auto;padding:100px 24px}
+#home{display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px;
+  min-height:100vh;justify-content:center;padding-top:60px}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(24px);filter:blur(7px);
+  transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1),filter .7s cubic-bezier(.22,1,.36,1)}
+.rv.in{opacity:1;transform:none;filter:none}
+.d1{transition-delay:.05s}.d2{transition-delay:.12s}.d3{transition-delay:.19s}
+.d4{transition-delay:.26s}.d5{transition-delay:.33s}.d6{transition-delay:.40s}
+.d7{transition-delay:.47s}.d8{transition-delay:.54s}
+
+/* profile pic */
+.ppic{width:94px;height:94px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(79,156,249,.25);
+  box-shadow:0 0 0 5px rgba(79,156,249,.07),0 0 28px rgba(79,156,249,.18);
+  transition:box-shadow .4s}
+.ppic:hover{box-shadow:0 0 0 5px rgba(79,156,249,.15),0 0 40px rgba(79,156,249,.35)}
+
+/* name */
+.hname{font-family:var(--fd);font-size:clamp(3.8rem,11vw,7.5rem);font-weight:800;
+  letter-spacing:-.03em;line-height:1;
+  background:linear-gradient(90deg,#4f9cf9 0%,#a8d4ff 18%,#4f9cf9 36%,#1d4ed8 55%,#93c5fd 75%,#4f9cf9 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 4.5s linear infinite}
+@keyframes shimmer{to{background-position:200% center}}
+
+/* discord pill */
+#dp{display:inline-flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);border-radius:999px;
+  padding:5px 14px;font-size:12px;font-family:var(--fm);color:var(--muted);
+  text-decoration:none;transition:border-color .3s}
+#dp:hover{border-color:rgba(79,156,249,.4)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .4s,box-shadow .4s}
+.dot.online{background:#3ba55c;box-shadow:0 0 6px #3ba55c}
+.dot.idle{background:#faa61a;box-shadow:0 0 6px #faa61a}
+.dot.dnd{background:#ed4245;box-shadow:0 0 6px #ed4245}
+.dot.offline{background:#484c52}
+
+/* now playing */
+#npc{width:100%;max-width:370px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:13px 15px;display:flex;align-items:center;gap:13px;
+  transition:border-color .3s,transform .3s}
+#npc:hover{border-color:rgba(79,156,249,.3);transform:translateY(-2px)}
+.npart{width:46px;height:46px;border-radius:8px;object-fit:cover;flex-shrink:0;
+  background:var(--surface2)}
+.npinfo{flex:1;min-width:0}
+.nplbl{font-size:10px;font-family:var(--fm);color:var(--blue);text-transform:uppercase;
+  letter-spacing:.1em;display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.bars{display:flex;align-items:flex-end;gap:2px;height:10px}
+.bars span{width:3px;background:var(--blue);border-radius:2px;
+  animation:bar .9s ease-in-out infinite alternate;transform-origin:bottom}
+.bars span:nth-child(2){animation-delay:.2s}
+.bars span:nth-child(3){animation-delay:.4s}
+@keyframes bar{from{height:3px}to{height:10px}}
+.bars.paused span{animation-play-state:paused}
+.nptr{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.npar{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* hero clock */
+#hclk{font-family:var(--fm);font-size:clamp(.95rem,2.4vw,1.2rem);color:var(--muted);letter-spacing:.06em}
+#hclk .ms{color:var(--muted2);font-size:.75em}
+
+/* section label */
+.slbl{font-family:var(--fm);font-size:11px;color:var(--blue);text-transform:uppercase;
+  letter-spacing:.15em;margin-bottom:22px;display:flex;align-items:center;gap:10px}
+.slbl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* about chips */
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;
+  padding:6px 14px;font-size:12px;font-family:var(--fm);color:var(--muted);
+  display:inline-flex;align-items:center;gap:7px;transition:border-color .25s,color .25s;cursor:default}
+.chip svg{width:13px;height:13px;flex-shrink:0}
+.chip:hover{border-color:rgba(79,156,249,.4);color:var(--text)}
+.chip.b{border-color:rgba(79,156,249,.3);color:var(--blue)}
+
+/* projects grid */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:11px}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 19px;cursor:pointer;transition:border-color .25s,transform .3s,box-shadow .3s;
+  position:relative;overflow:hidden}
+.pcard::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top left,rgba(79,156,249,.07),transparent 60%);
+  opacity:0;transition:opacity .3s}
+.pcard:hover{border-color:rgba(79,156,249,.35);transform:translateY(-3px);
+  box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.pcard:hover::before{opacity:1}
+.phead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.pname{font-family:var(--fd);font-size:16px;font-weight:700}
+.badge{font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:999px;
+  white-space:nowrap;flex-shrink:0;border:1px solid}
+.badge.live{color:#3ba55c;border-color:rgba(59,165,92,.35);background:rgba(59,165,92,.08)}
+.badge.dev{color:var(--muted);border-color:var(--muted2)}
+.pdesc{font-size:13px;color:var(--muted);line-height:1.5}
+.plinks{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.plink{font-size:11px;font-family:var(--fm);color:var(--blue);text-decoration:none;
+  border:1px solid rgba(79,156,249,.25);border-radius:999px;padding:3px 10px;
+  transition:background .2s,border-color .2s}
+.plink:hover{background:var(--blue-dim);border-color:var(--blue)}
+.plink.nl{color:var(--muted);border-color:var(--muted2);cursor:default;font-style:italic}
+
+/* modal */
+#mo{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);
+  z-index:800;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s}
+#mo.open{opacity:1;pointer-events:all}
+#md{width:100%;max-width:540px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg) var(--r-lg) 0 0;padding:32px 28px 48px;
+  transform:translateY(60px);transition:transform .45s cubic-bezier(.22,1,.36,1);position:relative}
+#mo.open #md{transform:none}
+#mc{position:absolute;top:14px;right:18px;background:none;border:none;
+  color:var(--muted);font-size:22px;cursor:pointer;line-height:1}
+#mc:hover{color:var(--text)}
+#mname{font-family:var(--fd);font-size:26px;font-weight:800;margin-bottom:8px}
+#mdesc{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:20px}
+#mlinks{display:flex;flex-wrap:wrap;gap:10px}
+.mlink{font-size:13px;font-family:var(--fm);color:var(--blue);text-decoration:none;
+  border:1px solid rgba(79,156,249,.35);border-radius:999px;padding:7px 18px;
+  transition:background .2s}
+.mlink:hover{background:var(--blue-dim)}
+.mlink.nl{color:var(--muted);border-color:var(--muted2);cursor:default;font-style:italic}
+
+/* cats */
+.cgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+@media(min-width:480px){.cgrid{grid-template-columns:repeat(3,1fr)}}
+.citem{border-radius:var(--r);overflow:hidden;aspect-ratio:1;background:var(--surface);
+  border:1px solid var(--border);cursor:pointer;position:relative;
+  transition:transform .35s cubic-bezier(.22,1,.36,1),border-color .3s}
+.citem:hover{transform:scale(1.03);border-color:rgba(79,156,249,.4)}
+.citem img{width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.citem:hover img{transform:scale(1.07)}
+.cname{position:absolute;bottom:0;left:0;right:0;padding:8px 10px;
+  background:linear-gradient(transparent,rgba(0,0,0,.65));
+  font-size:12px;opacity:0;transition:opacity .25s}
+.citem:hover .cname{opacity:1}
+
+/* lightbox */
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(18px);
+  z-index:900;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s}
+#lb.open{opacity:1;pointer-events:all}
+#lb img{max-width:90vw;max-height:85vh;border-radius:var(--r);object-fit:contain;
+  transform:scale(.92);transition:transform .4s cubic-bezier(.22,1,.36,1);
+  border:1px solid var(--border)}
+#lb.open img{transform:scale(1)}
+#lbc{position:absolute;top:18px;right:22px;background:none;border:none;
+  color:var(--muted);font-size:28px;cursor:pointer}
+#lbc:hover{color:var(--text)}
+
+/* big clock */
+#clkd{font-family:var(--fm);font-size:clamp(2.2rem,7vw,5rem);color:var(--text);
+  letter-spacing:.04em;text-align:center;padding:50px 0}
+#clkd .mp{color:var(--muted2);font-size:.48em;vertical-align:baseline}
+.clkdate{font-family:var(--fm);font-size:13px;color:var(--muted);text-align:center;
+  margin-top:-38px;letter-spacing:.08em}
+
+/* socials */
+.slist{display:flex;flex-direction:column;gap:9px}
+.spill{display:flex;align-items:center;gap:13px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r);padding:13px 17px;
+  text-decoration:none;color:var(--text);
+  transition:border-color .25s,transform .3s,box-shadow .3s;position:relative;overflow:hidden}
+.spill::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--blue-dim),transparent);opacity:0;transition:opacity .3s}
+.spill:hover{border-color:rgba(79,156,249,.35);transform:translateX(4px);
+  box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.spill:hover::before{opacity:1}
+.sico{width:36px;height:36px;background:var(--surface2);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .25s}
+.spill:hover .sico{background:var(--blue-dim)}
+.sico svg{width:17px;height:17px;color:var(--muted);transition:color .25s}
+.spill:hover .sico svg{color:var(--blue)}
+.sinf{flex:1;min-width:0}
+.splat{font-size:13px;font-weight:500}
+.shand{font-size:12px;color:var(--muted);font-family:var(--fm)}
+.smeta{font-size:11px;font-family:var(--fm);color:var(--muted);margin-left:auto;flex-shrink:0}
+.smeta.b{color:var(--blue)}
+
+/* divider */
+.div{width:100%;height:1px;background:var(--border);max-width:700px;margin:0 auto}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- NAV PILL -->
+<nav id="pill-nav">
+  <button class="pb active" data-s="home" aria-label="Home">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H15v-5.25a.75.75 0 00-.75-.75h-4.5a.75.75 0 00-.75.75V21H3.75A.75.75 0 013 21V9.75z"/></svg>
+  </button>
+  <button class="pb" data-s="socials" aria-label="Socials">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+  </button>
+  <button class="pb" data-s="projects" aria-label="Projects">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
+  </button>
+  <button class="pb" data-s="cats" aria-label="Cats">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6V3.75L7.5 6M19.5 6V3.75L16.5 6M12 9c-4.5 0-7.5 2.5-7.5 7v1.5A2.25 2.25 0 006.75 19.5h10.5A2.25 2.25 0 0019.5 17.25V16c0-4.5-3-7-7.5-7zM9.75 15a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm6 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM10.5 17.25c.75.75 2.25.75 3 0"/></svg>
+  </button>
+  <button class="pb" data-s="clock-section" aria-label="Clock">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5V12l3 3"/></svg>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <img id="ppic" class="ppic rv d1" src="" alt="Izaak"/>
+  <h1 class="hname rv d2">Izaak</h1>
+  <a id="dp" class="rv d3" href="#socials">
+    <span class="dot offline" id="pdot"></span>
+    <span id="ptxt">Loading...</span>
+  </a>
+  <div id="npc" class="rv d4">
+    <img class="npart" id="npart" src="" alt=""/>
+    <div class="npinfo">
+      <div class="nplbl">
+        <div class="bars" id="npbars"><span></span><span></span><span></span></div>
+        <span id="nplbltxt">Last.fm</span>
+      </div>
+      <div class="nptr" id="nptr">Loading...</div>
+      <div class="npar" id="npar">—</div>
+    </div>
+  </div>
+  <div id="hclk" class="rv d5">
+    <span id="hct">--:--:--</span><span class="ms" id="hcms">.---</span>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="slbl rv">About</div>
+  <div class="chips">
+    <div class="chip b rv d1" id="ghchip">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.185 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.607.069-.607 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844a9.59 9.59 0 012.504.337c1.909-1.296 2.747-1.026 2.747-1.026.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .267.18.578.688.48C19.138 20.2 22 16.447 22 12.021 22 6.484 17.523 2 12 2z"/></svg>
+      <span id="ghtxt">Loading...</span>
+    </div>
+    <div class="chip rv d2" id="rdchip">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+      <span id="rdtxt">ssprix</span>
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="slbl rv">Projects</div>
+  <div class="pgrid" id="pgrid"></div>
+</section>
+
+<div class="div"></div>
+
+<!-- CATS -->
+<section id="cats">
+  <div class="slbl rv">Cats 🐱</div>
+  <div class="cgrid" id="cgrid"></div>
+</section>
+
+<div class="div"></div>
+
+<!-- CLOCK -->
+<section id="clock-section">
+  <div class="slbl rv">Time</div>
+  <div id="clkd" class="rv d1">
+    <span id="clt">--:--:--</span><span class="mp" id="clms">.---</span>
+  </div>
+  <div class="clkdate rv d2" id="clkdate"></div>
+</section>
+
+<div class="div"></div>
+
+<!-- SOCIALS -->
+<section id="socials">
+  <div class="slbl rv">Socials</div>
+  <div class="slist" id="slist"></div>
+</section>
+
+<!-- MODAL -->
+<div id="mo">
+  <div id="md">
+    <button id="mc">×</button>
+    <div id="mbdg"></div>
+    <div id="mname"></div>
+    <div id="mdesc"></div>
+    <div id="mlinks"></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lb">
+  <button id="lbc">×</button>
+  <img id="lbimg" src="" alt=""/>
+</div>
+
+<script src="config.js"></script>
+<script>
+// ── init ──────────────────────────────────────
+document.getElementById('ppic').src = CONFIG.profilePic;
+
+// ── pill nav ──────────────────────────────────
+window.addEventListener('load',()=>setTimeout(()=>document.getElementById('pill-nav').classList.add('vis'),280));
+const pbs = document.querySelectorAll('.pb');
+pbs.forEach(b=>b.addEventListener('click',()=>{
+  const t=document.getElementById(b.dataset.s);
+  if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+}));
+const secIds=['home','socials','projects','cats','clock-section'];
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      pbs.forEach(b=>b.classList.remove('active'));
+      const a=document.querySelector(`.pb[data-s="${e.target.id}"]`);
+      if(a) a.classList.add('active');
+    }
+  });
+},{threshold:.4});
+secIds.forEach(id=>{const el=document.getElementById(id);if(el) obs.observe(el);});
+
+// ── scroll reveal ─────────────────────────────
+const ro=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}});
+},{threshold:.08});
+setTimeout(()=>{document.querySelectorAll('#home .rv').forEach(el=>el.classList.add('in'));},180);
+document.querySelectorAll('section:not(#home) .rv').forEach(el=>ro.observe(el));
+
+// ── clock ─────────────────────────────────────
+function tick(){
+  const n=new Date();
+  const t=new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:CONFIG.timezone}).format(n);
+  const ms=String(n.getMilliseconds()).padStart(3,'0');
+  document.getElementById('hct').textContent=t;
+  document.getElementById('hcms').textContent='.'+ms;
+  document.getElementById('clt').textContent=t;
+  document.getElementById('clms').textContent='.'+ms;
+  document.getElementById('clkdate').textContent=new Intl.DateTimeFormat('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:CONFIG.timezone}).format(n);
+}
+tick(); setInterval(tick,50);
+
+// ── lanyard ───────────────────────────────────
+async function presence(){
+  try{
+    const r=await fetch(`https://api.lanyard.rest/v1/users/${CONFIG.discordUserId}`);
+    const {data}=await r.json();
+    const s=data.discord_status||'offline';
+    const dot=document.getElementById('pdot');
+    dot.className='dot '+s;
+    const lbl={online:'Online',idle:'Idle',dnd:'Do Not Disturb',offline:'Offline'};
+    let txt=lbl[s]||'Offline';
+    if(data.activities){const a=data.activities.find(x=>x.type===0);if(a) txt='Playing '+a.name;}
+    document.getElementById('ptxt').textContent=`@uh.izaak · ${txt}`;
+    // mirror to socials dot
+    const sd=document.getElementById('sdot-discord');
+    if(sd){sd.className='dot '+s;sd.style.display='inline-block';}
+  }catch{document.getElementById('ptxt').textContent='@uh.izaak';}
+}
+presence(); setInterval(presence,30000);
+
+// ── last.fm ───────────────────────────────────
+// IMPORTANT: replace YOUR_LASTFM_API_KEY below with your real Last.fm API key
+// Get one free at https://www.last.fm/api/account/create
+const LFM_KEY = 'YOUR_LASTFM_API_KEY';
+async function lastfm(){
+  if(LFM_KEY==='YOUR_LASTFM_API_KEY'){
+    document.getElementById('nptr').textContent='Add Last.fm API key';
+    document.getElementById('npar').textContent='See comment in script';
+    return;
+  }
+  try{
+    const r=await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${CONFIG.lastfmUsername}&api_key=${LFM_KEY}&format=json&limit=1`);
+    const d=await r.json();
+    const tracks=d.recenttracks?.track;
+    if(!tracks||!tracks.length) return;
+    const tr=Array.isArray(tracks)?tracks[0]:tracks;
+    const now=tr['@attr']?.nowplaying==='true';
+    document.getElementById('nptr').textContent=tr.name||'—';
+    document.getElementById('npar').textContent=tr.artist?.['#text']||'—';
+    const art=tr.image?.find(i=>i.size==='large')?.['#text'];
+    const ae=document.getElementById('npart');
+    if(art&&art!==''){ae.src=art;}else{ae.src='';}
+    const bars=document.getElementById('npbars');
+    document.getElementById('nplbltxt').textContent=now?'Now Playing':'Last Played';
+    now?bars.classList.remove('paused'):bars.classList.add('paused');
+  }catch(e){document.getElementById('nptr').textContent='Unavailable';}
+}
+lastfm(); setInterval(lastfm,30000);
+
+// ── github ────────────────────────────────────
+function ago(d){const s=(Date.now()-new Date(d).getTime())/1000;
+  if(s<60) return Math.floor(s)+'s ago';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';}
+async function github(){
+  try{
+    const r=await fetch(`https://api.github.com/users/${CONFIG.githubUsername}/events/public`);
+    const ev=await r.json();
+    const push=ev.find(e=>e.type==='PushEvent');
+    if(!push){document.getElementById('ghtxt').textContent='iz-aak';return;}
+    const c=push.payload.commits?.slice(-1)[0];
+    if(!c) return;
+    const msg=c.message.split('\n')[0];
+    const short=msg.length>50?msg.slice(0,50)+'…':msg;
+    document.getElementById('ghtxt').textContent=`"${short}" · ${ago(push.created_at)}`;
+  }catch{document.getElementById('ghtxt').textContent='iz-aak';}
+}
+github();
+
+// ── reddit ────────────────────────────────────
+async function reddit(){
+  try{
+    const r=await fetch(`https://www.reddit.com/user/${CONFIG.redditUsername}/about.json`);
+    const d=await r.json();
+    const k=(d.data.link_karma+d.data.comment_karma).toLocaleString();
+    document.getElementById('rdtxt').textContent=`ssprix · ${k} karma`;
+    const m=document.getElementById('smeta-reddit');
+    if(m){m.textContent=k+' karma';m.classList.add('b');}
+  }catch{document.getElementById('rdtxt').textContent='ssprix';}
+}
+reddit();
+
+// ── build projects ────────────────────────────
+const pg=document.getElementById('pgrid');
+CONFIG.projects.forEach((p,i)=>{
+  const c=document.createElement('div');
+  c.className=`pcard rv d${(i%8)+1}`;
+  const linksHtml=p.status==='dev'
+    ?'<span class="plink nl">In development</span>'
+    :p.links.map(l=>l.url
+      ?`<a class="plink" href="${l.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${l.label}</a>`
+      :`<span class="plink nl">${l.label}</span>`).join('');
+  c.innerHTML=`<div class="phead"><div class="pname">${p.name}</div><div class="badge ${p.status==='live'?'live':'dev'}">${p.status==='live'?'Live':'In Development'}</div></div><div class="pdesc">${p.description}</div><div class="plinks">${linksHtml}</div>`;
+  c.addEventListener('click',()=>openModal(p));
+  pg.appendChild(c);
+  ro.observe(c);
+});
+
+// ── modal ─────────────────────────────────────
+const mo=document.getElementById('mo'),mc=document.getElementById('mc');
+function openModal(p){
+  document.getElementById('mbdg').innerHTML=`<div class="badge ${p.status==='live'?'live':'dev'}" style="display:inline-flex;margin-bottom:10px">${p.status==='live'?'Live':'In Development'}</div>`;
+  document.getElementById('mname').textContent=p.name;
+  document.getElementById('mdesc').textContent=p.description;
+  document.getElementById('mlinks').innerHTML=p.status==='dev'
+    ?'<span class="mlink nl">In development</span>'
+    :p.links.map(l=>l.url?`<a class="mlink" href="${l.url}" target="_blank" rel="noopener">${l.label} ↗</a>`:`<span class="mlink nl">${l.label}</span>`).join('');
+  mo.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){mo.classList.remove('open');document.body.style.overflow='';}
+mc.addEventListener('click',closeModal);
+mo.addEventListener('click',e=>{if(e.target===mo) closeModal();});
+
+// ── build cats ────────────────────────────────
+const cg=document.getElementById('cgrid');
+CONFIG.cats.forEach((cat,i)=>{
+  const item=document.createElement('div');
+  item.className=`citem rv d${(i%8)+1}`;
+  item.innerHTML=`<img src="${cat.url}" alt="${cat.name||'cat'}" loading="lazy"/>${cat.name?`<div class="cname">${cat.name}</div>`:''}`;
+  item.addEventListener('click',()=>openLB(cat.url));
+  cg.appendChild(item);
+  ro.observe(item);
+});
+
+// ── lightbox ──────────────────────────────────
+const lb=document.getElementById('lb'),lbc=document.getElementById('lbc'),lbimg=document.getElementById('lbimg');
+function openLB(src){lbimg.src=src;lb.classList.add('open');document.body.style.overflow='hidden';}
+function closeLB(){lb.classList.remove('open');document.body.style.overflow='';}
+lbc.addEventListener('click',closeLB);
+lb.addEventListener('click',e=>{if(e.target===lb||e.target===lbimg) closeLB();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeLB();}});
+
+// ── build socials ─────────────────────────────
+const ICONS={
+  github:`<svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.185 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.607.069-.607 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844a9.59 9.59 0 012.504.337c1.909-1.296 2.747-1.026 2.747-1.026.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .267.18.578.688.48C19.138 20.2 22 16.447 22 12.021 22 6.484 17.523 2 12 2z"/></svg>`,
+  twitter:`<svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+  instagram:`<svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>`,
+  discord:`<svg fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028 14.09 14.09 0 001.226-1.994.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>`,
+  reddit:`<svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>`,
+  mail:`<svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 7l10 7 10-7"/></svg>`,
+  shield:`<svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2l7 3.5V12c0 4.418-3.134 8.57-7 9.95C5.134 20.57 2 16.418 2 12V5.5L12 2z"/></svg>`,
+};
+const sl=document.getElementById('slist');
+CONFIG.socials.forEach((s,i)=>{
+  const el=document.createElement(s.url?'a':'div');
+  el.className=`spill rv d${(i%8)+1}`;
+  if(s.url){el.href=s.url;el.target='_blank';el.rel='noopener';}
+  const isD=s.icon==='discord';
+  el.innerHTML=`
+    <div class="sico">${ICONS[s.icon]||ICONS.mail}</div>
+    <div class="sinf">
+      <div class="splat">${s.platform}${isD?` <span id="sdot-discord" class="dot offline" style="display:inline-block;width:8px;height:8px;margin-left:3px;vertical-align:middle"></span>`:''}</div>
+      <div class="shand">${s.handle}</div>
+    </div>
+    <div class="smeta" id="smeta-${s.icon}"></div>`;
+  sl.appendChild(el);
+  ro.observe(el);
+});
+</script>
+</body>
+</html>
